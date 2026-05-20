@@ -3,31 +3,20 @@
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
-  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
   xsi:type="MailApp">
 
-  <!-- ═══════════════════════════════════════════
-       TEMEL BİLGİLER
-       Bu bölümdeki değerleri kendi bilgilerinizle güncelleyin.
-  ════════════════════════════════════════════ -->
-
-  <!-- 1. Benzersiz ID — guidgenerator.com'dan yeni GUID üretin -->
   <Id>d15d3d5a-87fa-48f1-be49-1a76b8703e69</Id>
-
-  <Version>1.0.0</Version>
+  <Version>1.0.0.0</Version>
   <ProviderName>KoZer</ProviderName>
   <DefaultLocale>tr-TR</DefaultLocale>
   <DisplayName DefaultValue="FreeBusy Sharer"/>
-  <Description DefaultValue="Takviminizdeki boş zamanları bulun ve şirket dışındaki kişilerle kolayca paylaşın."/>
-
-  <!-- 2. İkon URL'leri — github.com/alperberber80/freebusysharer yerine GitHub Pages URL'nizi yazın -->
-  <!-- Örnek: https://kullaniciadi.github.io/freebusysharer/assets/icon-32.png -->
-  <IconUrl DefaultValue="https://github.com/alperberber80/freebusysharer/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://github.com/alperberber80/freebusysharer/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://github.com/alperberber80/freebusysharer/support.html"/>
+  <Description DefaultValue="Takviminizdeki bos zamanlari bulun ve sirket disindaki kisilerle kolayca paylasin."/>
+  <IconUrl DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-64.png"/>
+  <SupportUrl DefaultValue="https://alperberber80.github.io/freebusysharer/support.html"/>
 
   <AppDomains>
-    <AppDomain>https://github.com/alperberber80/freebusysharer</AppDomain>
+    <AppDomain>https://alperberber80.github.io</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -43,8 +32,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <!-- 3. Taskpane URL — github.com/alperberber80/freebusysharer değiştirin -->
-        <SourceLocation DefaultValue="https://github.com/alperberber80/freebusysharer/taskpane.html"/>
+        <SourceLocation DefaultValue="https://alperberber80.github.io/freebusysharer/taskpane.html"/>
         <RequestedHeight>550</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -57,9 +45,6 @@
     <Rule xsi:type="ItemIs" ItemType="Appointment" FormType="Read"/>
   </Rule>
 
-  <!-- ═══════════════════════════════════════════
-       RİBBON BUTON TANIMLAMALARI (VersionOverrides)
-  ════════════════════════════════════════════ -->
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides"
                     xsi:type="VersionOverridesV1_0">
     <Requirements>
@@ -73,7 +58,6 @@
         <DesktopFormFactor>
           <FunctionFile resid="Commands.Url"/>
 
-          <!-- Yeni E-posta Compose Ribbon -->
           <ExtensionPoint xsi:type="MessageComposeCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="freebusyGroup.compose">
@@ -98,7 +82,6 @@
             </OfficeTab>
           </ExtensionPoint>
 
-          <!-- E-posta Okuma Ribbon -->
           <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="freebusyGroup.read">
@@ -129,20 +112,20 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://github.com/alperberber80/freebusysharer/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://github.com/alperberber80/freebusysharer/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://github.com/alperberber80/freebusysharer/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url"  DefaultValue="https://github.com/alperberber80/freebusysharer/commands.html"/>
-        <bt:Url id="Taskpane.Url"  DefaultValue="https://github.com/alperberber80/freebusysharer/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://alperberber80.github.io/freebusysharer/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://alperberber80.github.io/freebusysharer/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel"   DefaultValue="Toplantı Araçları"/>
-        <bt:String id="ButtonLabel"  DefaultValue="Müsait Saatleri Paylaş"/>
+        <bt:String id="GroupLabel"  DefaultValue="Toplanti Araclari"/>
+        <bt:String id="ButtonLabel" DefaultValue="Musait Saatleri Paylas"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="ButtonDesc"   DefaultValue="Takviminizdeki boş zamanları bulun ve şirket dışı kişilerle paylaşın."/>
+        <bt:String id="ButtonDesc"  DefaultValue="Takviminizdeki bos zamanlari bulun ve paylasın."/>
       </bt:LongStrings>
     </Resources>
 
