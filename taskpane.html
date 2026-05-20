@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FreeBusy Sharer</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0f0f1a;--surf:#1a1a2e;--brd:#222238;--muted:#4a4a66;
+  --text:#d8d8f0;--sub:#b0b0d0;--accent:#4f9ef8;--purple:#a78bfa;
+  --green:#34d399;--red:#f87171;--yellow:#fbbf24;
+  --shadow:0 2px 12px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a1a2e,#12122a);border-bottom:1px solid var(--brd);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.header-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.header-title{font-size:14px;font-weight:700;color:var(--text)}
+.header-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* Tab bar */
+.tabs{display:flex;background:#0d0d1e;border-bottom:1px solid var(--brd);flex-shrink:0}
+.tab{flex:1;padding:9px 6px;font-size:11px;font-weight:700;color:#3a3a55;cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);background:rgba(79,158,248,.06)}
+
+/* Body */
+.body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.body::-webkit-scrollbar{width:3px}
+.body::-webkit-scrollbar-thumb{background:var(--brd)}
+
+/* Section labels */
+.lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+
+/* Inputs */
+.inp{background:var(--surf);border:1px solid var(--brd);border-radius:5px;color:var(--sub);font-family:'DM Mono',monospace;font-size:11px;padding:7px 8px;outline:none;width:100%;transition:border-color .15s}
+.inp:focus{border-color:var(--accent)}
+.inp::-webkit-calendar-picker-indicator{filter:invert(.4) brightness(1.5);cursor:pointer;opacity:.7}
+.row2{display:flex;gap:6px}
+.row2 .inp{flex:1}
+.time-sep{color:var(--muted);font-size:11px;align-self:center;flex-shrink:0}
+
+/* Chips */
+.chips{display:flex;gap:3px}
+.chip{flex:1;background:var(--surf);border:1px solid var(--brd);border-radius:4px;color:#3a3a55;font-size:9px;font-weight:700;padding:6px 2px;text-align:center;cursor:pointer;user-select:none;transition:all .15s}
+.chip.on{background:rgba(79,158,248,.14);border-color:var(--accent);color:var(--accent)}
+.chip.pur.on{background:rgba(167,139,250,.14);border-color:var(--purple);color:var(--purple)}
+
+/* Switch */
+.sw-row{display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--brd);border-radius:5px;padding:7px 9px}
+.sw{width:28px;height:16px;background:#2a2a3e;border-radius:8px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.sw.on{background:var(--purple)}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
+.sw.on::after{left:14px}
+.sw-lbl{font-size:10px;color:var(--muted);flex:1}
+
+/* Mode toggle */
+.mode-row{display:flex;background:var(--surf);border:1px solid var(--brd);border-radius:6px;overflow:hidden}
+.mode-btn{flex:1;padding:7px 6px;font-size:10px;font-weight:700;color:#3a3a55;cursor:pointer;text-align:center;font-family:'Nunito',sans-serif;border:none;background:none;transition:all .15s}
+.mode-btn.on{background:rgba(79,158,248,.16);color:var(--accent)}
+.mode-btn:first-child{border-right:1px solid var(--brd)}
+.mode-desc{font-size:9px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* Recipient card */
+.rcrd{background:rgba(79,158,248,.06);border:1px solid rgba(79,158,248,.2);border-radius:7px;padding:9px 10px;display:flex;flex-direction:column;gap:7px}
+.radio-grp{display:flex;gap:4px;align-items:center;background:var(--surf);border:1px solid var(--brd);border-radius:5px;padding:0 8px;height:32px;flex-shrink:0}
+.radio-grp label{display:flex;align-items:center;gap:3px;cursor:pointer;font-size:10px;color:var(--muted);white-space:nowrap}
+.radio-grp input[type=radio]{accent-color:var(--accent);cursor:pointer}
+.radio-sep{width:1px;height:12px;background:var(--brd)}
+
+/* Participants (group) */
+.p-list{display:flex;flex-direction:column;gap:4px}
+.p-row{display:flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--brd);border-radius:5px;padding:6px 8px}
+.p-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.p-name{font-size:11px;color:var(--sub);flex:1;font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-rm{background:none;border:none;color:#3a3a55;cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.p-rm:hover{color:var(--red)}
+.p-self{font-size:9px;color:var(--accent);background:rgba(79,158,248,.12);border:1px solid rgba(79,158,248,.25);border-radius:3px;padding:1px 5px;white-space:nowrap}
+.add-row{display:flex;gap:5px;margin-top:4px}
+.add-btn{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:5px;color:var(--green);font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.add-btn:hover{background:rgba(52,211,153,.2)}
+
+/* Calendar mini */
+.cal-wrap{background:var(--surf);border:1px solid var(--brd);border-radius:6px;overflow:hidden}
+.cal-legend{display:flex;gap:6px;padding:5px 8px;background:#14142a;border-top:1px solid var(--brd);flex-wrap:wrap}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--muted)}
+.leg-d{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* Slot list */
+.slot-list{display:flex;flex-direction:column;gap:3px}
+.slot-row{display:flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--brd);border-radius:5px;padding:6px 8px;cursor:pointer;user-select:none;transition:all .15s}
+.slot-row:hover{background:#1e1e34}
+.slot-row.sel{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.06)}
+.schk{width:13px;height:13px;border:1.5px solid #2a2a3e;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none}
+.slot-row.sel .schk{background:var(--green);border-color:var(--green)}
+.stk{display:none;font-size:8px;color:#000;font-weight:800;pointer-events:none}
+.slot-row.sel .stk{display:block}
+.sday{color:var(--muted);font-size:9px;min-width:62px;font-family:'DM Mono',monospace;pointer-events:none}
+.stime{color:var(--sub);font-size:10px;font-weight:700;font-family:'DM Mono',monospace;pointer-events:none}
+.stag{font-size:8px;margin-left:auto;pointer-events:none;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.stag.f{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.stag.w{background:rgba(79,158,248,.15);color:var(--accent);border:1px solid rgba(79,158,248,.3)}
+
+/* Buttons */
+.find-btn{background:rgba(79,158,248,.12);border:1px solid rgba(79,158,248,.3);border-radius:6px;color:var(--accent);font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;padding:8px;width:100%;cursor:pointer;transition:all .2s}
+.find-btn:hover{background:rgba(79,158,248,.22)}
+.find-btn:disabled{opacity:.4;cursor:not-allowed}
+.send-btn{background:linear-gradient(135deg,var(--accent),#1d4ed8);border:none;border-radius:7px;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:9px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.send-btn:disabled{opacity:.35;cursor:not-allowed}
+.send-btn:not(:disabled):hover{opacity:.88}
+
+/* Status / toast */
+.status{font-size:10px;text-align:center;padding:4px 0;min-height:18px}
+.status.ok{color:var(--green)}
+.status.err{color:var(--red)}
+.status.info{color:var(--accent)}
+.ph{color:#2a2a42;font-size:10px;padding:10px 0;text-align:center;font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📅</div>
+  <div>
+    <div class="header-title">FreeBusy Sharer</div>
+    <div class="header-sub">Müsait zamanlarını paylaş</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" id="tabSolo"  onclick="switchTab('solo')">👤 Bireysel</div>
+  <div class="tab"    id="tabGroup" onclick="switchTab('group')">👥 Grup</div>
+</div>
+
+<div class="body" id="mainBody">
+  <!-- renderPanel() ile doldurulur -->
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+var DAY_NAMES   = ['Pz','Pt','Sa','Ça','Pe','Cu','Ct'];
+var MONTH_NAMES = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+var P_COLORS    = ['#4f9ef8','#f87171','#fbbf24','#a78bfa','#34d399','#fb923c','#e879f9','#38bdf8'];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+var activeTab = 'solo';
+var slots     = [];
+var appState  = 'idle'; // idle | loading | ready | sending
+
+var ST = {
+  solo:  {days:[1,2,3,4,5], dur:30, mode:'fixed', lunch:false},
+  group: {days:[1,2,3,4,5], dur:30, mode:'fixed', lunch:false,
+    parts:[]}
+};
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function pad2(n){ return String(n).padStart(2,'0'); }
+function mts(m){ return pad2(Math.floor(m/60))+':'+pad2(m%60); }
+function fmtDate(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function parseDate(s){ var p=s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function dayIn(d){ return ST[activeTab].days.indexOf(d)!==-1; }
+function getMin(id){ var v=(document.getElementById(id).value||'00:00').split(':'); return parseInt(v[0])*60+parseInt(v[1]); }
+function cst(){ return ST[activeTab]; }
+function today(){ return new Date(); }
+function plus6(){ var d=new Date(); d.setDate(d.getDate()+6); return d; }
+function setStatus(msg, type){ var el=document.getElementById('statusMsg'); if(el){el.textContent=msg;el.className='status '+(type||'');} }
+
+// ─────────────────────────────────────────────
+// OFFICE.JS READY
+// ─────────────────────────────────────────────
+Office.onReady(function(info){
+  if(info.host === Office.HostType.Outlook){
+    renderPanel();
+  }
+});
+
+// ─────────────────────────────────────────────
+// EWS: TAKVİM VERİSİ ÇEK
+// ─────────────────────────────────────────────
+function fetchBusyBlocks(startDt, endDt, callback){
+  if(!Office.context || !Office.context.mailbox){
+    // DEV MODE: test verisi döndür
+    callback(null, getDevBusyBlocks(startDt, endDt));
+    return;
+  }
+
+  var userEmail = Office.context.mailbox.userProfile.emailAddress;
+  var ewsXml = buildEwsRequest(userEmail, startDt, endDt);
+
+  Office.context.mailbox.makeEwsRequestAsync(ewsXml, function(result){
+    if(result.status === Office.AsyncResultStatus.Failed){
+      callback(result.error.message, null);
+      return;
+    }
+    callback(null, parseEwsResponse(result.value));
+  });
+}
+
+function fetchGroupBusyBlocks(emails, startDt, endDt, callback){
+  if(!Office.context || !Office.context.mailbox){
+    var blocks = {};
+    emails.forEach(function(email){ blocks[email] = getDevBusyBlocks(startDt, endDt, email); });
+    callback(null, blocks);
+    return;
+  }
+
+  var ewsXml = buildGroupEwsRequest(emails, startDt, endDt);
+  Office.context.mailbox.makeEwsRequestAsync(ewsXml, function(result){
+    if(result.status === Office.AsyncResultStatus.Failed){
+      callback(result.error.message, null);
+      return;
+    }
+    callback(null, parseGroupEwsResponse(result.value, emails));
+  });
+}
+
+function buildEwsRequest(email, startDt, endDt){
+  var fmt = function(d){ return d.toISOString().replace(/\.\d+Z$/,'Z'); };
+  return '<?xml version="1.0" encoding="utf-8"?>' +
+  '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
+  ' xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"' +
+  ' xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"' +
+  ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+  '<soap:Header><t:RequestServerVersion Version="Exchange2013"/></soap:Header>' +
+  '<soap:Body><m:GetUserAvailabilityRequest>' +
+  '<t:TimeZone><t:Bias>-180</t:Bias>' +
+  '<t:StandardTime><t:Bias>0</t:Bias><t:Time>02:00:00</t:Time><t:DayOrder>1</t:DayOrder><t:Month>10</t:Month><t:DayOfWeek>Sunday</t:DayOfWeek></t:StandardTime>' +
+  '<t:DaylightTime><t:Bias>0</t:Bias><t:Time>02:00:00</t:Time><t:DayOrder>1</t:DayOrder><t:Month>4</t:Month><t:DayOfWeek>Sunday</t:DayOfWeek></t:DaylightTime>' +
+  '</t:TimeZone>' +
+  '<m:MailboxDataArray><t:MailboxData>' +
+  '<t:Email><t:Address>'+email+'</t:Address></t:Email>' +
+  '<t:AttendeeType>Required</t:AttendeeType>' +
+  '<t:ExcludeConflicts>false</t:ExcludeConflicts>' +
+  '</t:MailboxData></m:MailboxDataArray>' +
+  '<m:FreeBusyViewOptions>' +
+  '<t:TimeWindow><t:StartTime>'+fmt(startDt)+'</t:StartTime><t:EndTime>'+fmt(endDt)+'</t:EndTime></t:TimeWindow>' +
+  '<t:MergedFreeBusyIntervalInMinutes>30</t:MergedFreeBusyIntervalInMinutes>' +
+  '<t:RequestedView>DetailedMerged</t:RequestedView>' +
+  '</m:FreeBusyViewOptions>' +
+  '</m:GetUserAvailabilityRequest></soap:Body></soap:Envelope>';
+}
+
+function buildGroupEwsRequest(emails, startDt, endDt){
+  var fmt = function(d){ return d.toISOString().replace(/\.\d+Z$/,'Z'); };
+  var mailboxes = emails.map(function(email){
+    return '<t:MailboxData><t:Email><t:Address>'+email+'</t:Address></t:Email>' +
+      '<t:AttendeeType>Required</t:AttendeeType><t:ExcludeConflicts>false</t:ExcludeConflicts></t:MailboxData>';
+  }).join('');
+
+  return '<?xml version="1.0" encoding="utf-8"?>' +
+  '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
+  ' xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"' +
+  ' xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"' +
+  ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+  '<soap:Header><t:RequestServerVersion Version="Exchange2013"/></soap:Header>' +
+  '<soap:Body><m:GetUserAvailabilityRequest>' +
+  '<t:TimeZone><t:Bias>-180</t:Bias>' +
+  '<t:StandardTime><t:Bias>0</t:Bias><t:Time>02:00:00</t:Time><t:DayOrder>1</t:DayOrder><t:Month>10</t:Month><t:DayOfWeek>Sunday</t:DayOfWeek></t:StandardTime>' +
+  '<t:DaylightTime><t:Bias>0</t:Bias><t:Time>02:00:00</t:Time><t:DayOrder>1</t:DayOrder><t:Month>4</t:Month><t:DayOfWeek>Sunday</t:DayOfWeek></t:DaylightTime>' +
+  '</t:TimeZone>' +
+  '<m:MailboxDataArray>'+mailboxes+'</m:MailboxDataArray>' +
+  '<m:FreeBusyViewOptions>' +
+  '<t:TimeWindow><t:StartTime>'+fmt(startDt)+'</t:StartTime><t:EndTime>'+fmt(endDt)+'</t:EndTime></t:TimeWindow>' +
+  '<t:MergedFreeBusyIntervalInMinutes>30</t:MergedFreeBusyIntervalInMinutes>' +
+  '<t:RequestedView>DetailedMerged</t:RequestedView>' +
+  '</m:FreeBusyViewOptions>' +
+  '</m:GetUserAvailabilityRequest></soap:Body></soap:Envelope>';
+}
+
+function parseEwsResponse(xmlStr){
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xmlStr, 'text/xml');
+  var ns  = 'http://schemas.microsoft.com/exchange/services/2006/types';
+  var events = doc.getElementsByTagNameNS(ns, 'CalendarEvent');
+  var blocks = [];
+  for(var i=0; i<events.length; i++){
+    var s = events[i].getElementsByTagNameNS(ns,'StartTime')[0];
+    var e = events[i].getElementsByTagNameNS(ns,'EndTime')[0];
+    if(s && e){
+      var sd = new Date(s.textContent), ed = new Date(e.textContent);
+      blocks.push([sd.getHours()*60+sd.getMinutes(), ed.getHours()*60+ed.getMinutes(), fmtDate(sd)]);
+    }
+  }
+  return blocks;
+}
+
+function parseGroupEwsResponse(xmlStr, emails){
+  // Her kullanıcı için ayrı blok listesi döndür
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xmlStr, 'text/xml');
+  var ns  = 'http://schemas.microsoft.com/exchange/services/2006/types';
+  var responses = doc.getElementsByTagNameNS(ns,'FreeBusyResponse');
+  var result = {};
+  for(var i=0; i<responses.length; i++){
+    if(i >= emails.length) break;
+    var events = responses[i].getElementsByTagNameNS(ns,'CalendarEvent');
+    var blocks = [];
+    for(var j=0; j<events.length; j++){
+      var s = events[j].getElementsByTagNameNS(ns,'StartTime')[0];
+      var e = events[j].getElementsByTagNameNS(ns,'EndTime')[0];
+      if(s && e){
+        var sd = new Date(s.textContent), ed = new Date(e.textContent);
+        blocks.push([sd.getHours()*60+sd.getMinutes(), ed.getHours()*60+ed.getMinutes(), fmtDate(sd)]);
+      }
+    }
+    result[emails[i]] = blocks;
+  }
+  return result;
+}
+
+// DEV MODE: rastgele meşgul bloklar (gerçek Exchange yokken)
+function getDevBusyBlocks(startDt, endDt, seed){
+  var blocks = [];
+  var cur = new Date(startDt);
+  var h = seed ? (seed.length * 7) % 5 : 0;
+  while(cur <= endDt){
+    var dk = fmtDate(cur);
+    var dow = cur.getDay();
+    if(dow >= 1 && dow <= 5){
+      // Sabah blok
+      var b1s = 9*60 + (h*30) % 60;
+      blocks.push([b1s, b1s+60, dk]);
+      // Öğlen blok
+      var b2s = 14*60 + (h*20) % 60;
+      blocks.push([b2s, b2s+60, dk]);
+    }
+    h = (h+3) % 7;
+    cur.setDate(cur.getDate()+1);
+  }
+  return blocks;
+}
+
+// Meşgul blok kontrolü
+function isBusy(blocks, dateKey, startMin, endMin){
+  for(var i=0; i<blocks.length; i++){
+    if(blocks[i][2] === dateKey && startMin < blocks[i][1] && endMin > blocks[i][0])
+      return true;
+  }
+  return false;
+}
+
+// Boş aralıkları çıkar
+function subtractBusy(s, e, dayBlocks){
+  var free = [{s:s,e:e}];
+  dayBlocks.forEach(function(b){
+    var next=[];
+    free.forEach(function(f){
+      if(b[0]>=f.e||b[1]<=f.s){next.push(f);}
+      else{if(f.s<b[0])next.push({s:f.s,e:b[0]});if(b[1]<f.e)next.push({s:b[1],e:f.e});}
+    });
+    free=next;
+  });
+  return free.filter(function(f){return f.e>f.s;});
+}
+
+// ─────────────────────────────────────────────
+// SLOT HESAPLAMA
+// ─────────────────────────────────────────────
+function computeSlots(busyBlocks, startDt, endDt, ws, we, ls, le, durMin, mode, activeDays){
+  var result = [];
+  var cur = new Date(startDt);
+  while(cur <= endDt){
+    var dow = cur.getDay();
+    if(activeDays.indexOf(dow) !== -1){
+      var lbl = DAY_NAMES[dow]+' '+cur.getDate()+' '+MONTH_NAMES[cur.getMonth()];
+      var dk  = fmtDate(cur);
+      // Bu güne ait meşgul bloklar
+      var dayBlocks = busyBlocks.filter(function(b){return b[2]===dk;});
+
+      if(mode === 'fixed'){
+        var c = ws;
+        while(c + durMin <= we){
+          var se = c + durMin;
+          var overLunch = (ls !== null) && c < le && se > ls;
+          if(!overLunch && !isBusy(busyBlocks, dk, c, se))
+            result.push({lbl:lbl, dk:dk, s:c, e:se, time:mts(c)+'–'+mts(se), sel:true, win:false});
+          c += durMin;
+        }
+      } else {
+        // Boş pencere modu
+        var dayBusyRanges = dayBlocks.map(function(b){return [b[0],b[1]];});
+        if(ls !== null) dayBusyRanges.push([ls, le]);
+        dayBusyRanges.push([-1, ws]);
+        dayBusyRanges.push([we, we+9999]);
+        dayBusyRanges.sort(function(a,b){return a[0]-b[0];});
+        var merged = [];
+        dayBusyRanges.forEach(function(b){
+          if(merged.length && b[0]<=merged[merged.length-1][1])
+            merged[merged.length-1][1]=Math.max(merged[merged.length-1][1],b[1]);
+          else merged.push([b[0],b[1]]);
+        });
+        for(var i=0; i<merged.length-1; i++){
+          var fs=merged[i][1], fe=merged[i+1][0];
+          if(fe-fs >= 1)
+            result.push({lbl:lbl, dk:dk, s:fs, e:fe, time:mts(fs)+'–'+mts(fe), sel:true, win:true});
+        }
+      }
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────
+// PANEL RENDER
+// ─────────────────────────────────────────────
+function renderPanel(){
+  var t  = activeTab, st = cst();
+  var sv = (document.getElementById('dateStart')||{}).value || fmtDate(today());
+  var ev = (document.getElementById('dateEnd')  ||{}).value || fmtDate(plus6());
+  var ts = (document.getElementById('timeStart')||{}).value || '09:00';
+  var te = (document.getElementById('timeEnd')  ||{}).value || '18:00';
+  var ls = (document.getElementById('lunchStart')||{}).value|| '12:00';
+  var le = (document.getElementById('lunchEnd')  ||{}).value|| '13:00';
+  var rn = (document.getElementById('recipientName') ||{}).value||'';
+  var re = (document.getElementById('recipientInput')||{}).value||'';
+  var rh = document.getElementById('unvanHanim')?document.getElementById('unvanHanim').checked:false;
+  var rb = document.getElementById('unvanBey')  ?document.getElementById('unvanBey').checked  :false;
+
+  var dayChips = ['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].map(function(n,i){
+    var d=[1,2,3,4,5,6,0][i];
+    return '<div class="chip'+(dayIn(d)?' on':'')+'" data-d="'+d+'">'+n+'</div>';
+  }).join('');
+
+  var durChips = [[30,'30 dk'],[45,'45 dk'],[60,'1 sa'],[90,'1.5 sa']].map(function(x){
+    return '<div class="chip pur'+(st.dur===x[0]?' on':'')+'" data-min="'+x[0]+'">'+x[1]+'</div>';
+  }).join('');
+
+  var pHtml = '';
+  if(t === 'group'){
+    var pRows = st.parts.map(function(p,i){
+      return '<div class="p-row"><div class="p-dot" style="background:'+p.color+'"></div>'+
+        '<span class="p-name">'+p.email+'</span>'+
+        '<button class="p-rm" onclick="removeP('+i+')">×</button></div>';
+    }).join('');
+    pHtml =
+      '<div>'+
+        '<div class="lbl" style="margin-bottom:5px">👥 Katılımcılar</div>'+
+        '<div class="p-row" style="margin-bottom:4px;border-color:rgba(79,158,248,.3);background:rgba(79,158,248,.06)">'+
+          '<div class="p-dot" style="background:#4f9ef8"></div>'+
+          '<span class="p-name" style="color:#4f9ef8" id="selfEmail">Yükleniyor…</span>'+
+          '<span class="p-self">Siz</span>'+
+        '</div>'+
+        '<div class="p-list" id="pList">'+pRows+'</div>'+
+        '<div class="add-row">'+
+          '<input class="inp" id="addEmail" type="text" placeholder="katilimci@sirket.com" style="flex:1"/>'+
+          '<button class="add-btn" onclick="addP()">+ Ekle</button>'+
+        '</div>'+
+        '<div id="addErr" style="font-size:9px;color:#f87171;margin-top:3px;display:none"></div>'+
+      '</div>';
+  }
+
+  document.getElementById('mainBody').innerHTML =
+    // 1. Alıcı
+    '<div class="rcrd">'+
+      '<div class="lbl" style="margin-bottom:0;color:var(--accent)">👤 Alıcı bilgileri</div>'+
+      '<div>'+
+        '<div class="lbl">Alıcı adı <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#3a3a55">(opsiyonel)</span></div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<input class="inp" id="recipientName" type="text" placeholder="Örn: Ali Yılmaz" value="'+rn+'" style="flex:1"/>'+
+          '<div class="radio-grp">'+
+            '<label><input type="radio" name="unvan" id="unvanHanim" value="Hanım"'+(rh?' checked':'')+'/> Hanım</label>'+
+            '<div class="radio-sep"></div>'+
+            '<label><input type="radio" name="unvan" id="unvanBey" value="Bey"'+(rb?' checked':'')+'/> Bey</label>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div>'+
+        '<div class="lbl">E-posta <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#3a3a55">(; ile ayırın)</span></div>'+
+        '<input class="inp" id="recipientInput" type="text" value="'+re+'" placeholder="a@x.com; b@y.com"/>'+
+      '</div>'+
+    '</div>'+
+
+    // 2. Katılımcılar (group only)
+    pHtml+
+
+    // 3. Tarih
+    '<div>'+
+      '<div class="lbl">Tarih aralığı</div>'+
+      '<div class="row2">'+
+        '<input class="inp" type="date" id="dateStart" value="'+sv+'"/>'+
+        '<input class="inp" type="date" id="dateEnd"   value="'+ev+'"/>'+
+      '</div>'+
+    '</div>'+
+
+    // 4. Çalışma saatleri
+    '<div>'+
+      '<div class="lbl">Çalışma saatleri</div>'+
+      '<div class="row2" style="margin-bottom:7px">'+
+        '<input class="inp" type="time" id="timeStart" value="'+ts+'"/>'+
+        '<span class="time-sep">–</span>'+
+        '<input class="inp" type="time" id="timeEnd"   value="'+te+'"/>'+
+      '</div>'+
+      '<div class="lbl" style="margin-top:2px">Günler</div>'+
+      '<div class="chips" id="daysRow">'+dayChips+'</div>'+
+    '</div>'+
+
+    // 5. Öğle arası
+    '<div>'+
+      '<div class="lbl">Öğle yemeği arası</div>'+
+      '<div class="sw-row">'+
+        '<div class="sw'+(st.lunch?' on':'')+'" id="lunchSw" onclick="toggleLunch()"></div>'+
+        '<span class="sw-lbl" id="lunchLbl">'+(st.lunch?'Açık':'Kapalı')+'</span>'+
+      '</div>'+
+      '<div id="lunchTimes" style="display:'+(st.lunch?'block':'none')+';margin-top:6px">'+
+        '<div class="row2">'+
+          '<input class="inp" type="time" id="lunchStart" value="'+ls+'"/>'+
+          '<span class="time-sep">–</span>'+
+          '<input class="inp" type="time" id="lunchEnd"   value="'+le+'"/>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    // 6. Süre
+    '<div>'+
+      '<div class="lbl">Toplantı süresi (sabit mod)</div>'+
+      '<div class="chips" id="durRow" style="'+(st.mode==='window'?'opacity:.35;pointer-events:none':'')+'">'+durChips+'</div>'+
+    '</div>'+
+
+    // 7. Mod
+    '<div>'+
+      '<div class="lbl">Öneri modu</div>'+
+      '<div class="mode-row">'+
+        '<button class="mode-btn'+(st.mode==='fixed'?' on':'')+'" id="modeFixed"  onclick="setMode(\'fixed\')">⏱ Sabit Aralık</button>'+
+        '<button class="mode-btn'+(st.mode==='window'?' on':'')+'" id="modeWindow" onclick="setMode(\'window\')">📐 Boş Pencere</button>'+
+      '</div>'+
+      '<div class="mode-desc" id="modeDesc">'+(st.mode==='fixed'?'Seçilen süreye göre boş slotları listeler.':'Boş pencereleri tek slot olarak gösterir.')+'</div>'+
+    '</div>'+
+
+    // 8. Takvim
+    '<div>'+
+      '<div class="lbl">Takvim (30 dk)</div>'+
+      '<div class="cal-wrap"><div style="overflow-x:auto"><div id="calInner"></div></div>'+
+      '<div class="cal-legend" id="calLegend"></div></div>'+
+    '</div>'+
+
+    // 9. Bul butonu
+    '<button class="find-btn" id="findBtn" onclick="findSlots()">🔍 Slotları Bul</button>'+
+    '<div class="status" id="statusMsg"></div>'+
+
+    // 10. Slot listesi
+    '<div>'+
+      '<div class="lbl" style="display:flex;justify-content:space-between;margin-bottom:5px">'+
+        '<span>Müsait slotlar</span>'+
+        '<span style="color:var(--green);font-size:9px;font-weight:700" id="slotCount"></span>'+
+      '</div>'+
+      '<div class="slot-list" id="slotList">'+
+        '<div class="ph">⏳ Ayarları yapıp "Slotları Bul"a tıklayın</div>'+
+      '</div>'+
+    '</div>'+
+
+    // 11. Gönder
+    '<button class="send-btn" id="sendBtn" onclick="doSend()" disabled>✉️ E-posta Gönder</button>';
+
+  bindEvents();
+  buildCal();
+
+  // Kullanıcı e-postasını al (group sekmesi için)
+  if(t === 'group' && Office.context && Office.context.mailbox){
+    var email = Office.context.mailbox.userProfile.emailAddress;
+    var selfEl = document.getElementById('selfEmail');
+    if(selfEl) selfEl.textContent = email;
+  }
+}
+
+// ─────────────────────────────────────────────
+// EVENT BINDING
+// ─────────────────────────────────────────────
+function bindEvents(){
+  document.getElementById('daysRow').addEventListener('click', function(e){
+    var c=e.target.closest('.chip'); if(!c||!c.dataset.d) return;
+    var d=parseInt(c.dataset.d), arr=cst().days, i=arr.indexOf(d);
+    if(i!==-1) arr.splice(i,1); else arr.push(d);
+    c.classList.toggle('on', arr.indexOf(d)!==-1);
+    buildCal();
+  });
+  document.getElementById('durRow').addEventListener('click', function(e){
+    var c=e.target.closest('.chip'); if(!c||!c.dataset.min) return;
+    cst().dur = parseInt(c.dataset.min);
+    document.querySelectorAll('#durRow .chip').forEach(function(x){ x.classList.toggle('on', x===c); });
+  });
+  ['dateStart','dateEnd','timeStart','timeEnd','lunchStart','lunchEnd'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.addEventListener('change', buildCal);
+  });
+  document.getElementById('slotList').addEventListener('click', function(e){
+    if(appState !== 'ready') return;
+    var row=e.target.closest('[data-idx]'); if(!row) return;
+    var i=parseInt(row.dataset.idx);
+    slots[i].sel = !slots[i].sel;
+    renderSlots();
+  });
+}
+
+// ─────────────────────────────────────────────
+// TAB / TOGGLE / MODE
+// ─────────────────────────────────────────────
+function switchTab(t){
+  activeTab=t; appState='idle'; slots=[];
+  document.getElementById('tabSolo').classList.toggle('on', t==='solo');
+  document.getElementById('tabGroup').classList.toggle('on', t==='group');
+  renderPanel(); setStatus('');
+}
+function toggleLunch(){
+  var on=!cst().lunch; cst().lunch=on;
+  document.getElementById('lunchSw').classList.toggle('on', on);
+  document.getElementById('lunchLbl').textContent = on ? 'Açık' : 'Kapalı';
+  document.getElementById('lunchTimes').style.display = on ? 'block' : 'none';
+  buildCal();
+}
+function setMode(m){
+  cst().mode=m;
+  document.getElementById('modeFixed').classList.toggle('on', m==='fixed');
+  document.getElementById('modeWindow').classList.toggle('on', m==='window');
+  document.getElementById('durRow').style.opacity = m==='fixed'?'1':'0.35';
+  document.getElementById('durRow').style.pointerEvents = m==='fixed'?'auto':'none';
+  document.getElementById('modeDesc').textContent = m==='fixed'
+    ? 'Seçilen süreye göre boş slotları listeler.'
+    : 'Boş pencereleri tek slot olarak gösterir.';
+}
+function addP(){
+  var inp=document.getElementById('addEmail');
+  var email=inp.value.trim();
+  var err=document.getElementById('addErr');
+  if(!email||email.indexOf('@')===-1){ err.style.display='block'; err.textContent='Geçerli e-posta girin'; return; }
+  if(ST.group.parts.some(function(p){return p.email===email;})){ err.style.display='block'; err.textContent='Zaten listede'; return; }
+  err.style.display='none';
+  ST.group.parts.push({email:email, color:P_COLORS[(ST.group.parts.length+1)%P_COLORS.length]});
+  inp.value='';
+  document.getElementById('pList').innerHTML = ST.group.parts.map(function(p,i){
+    return '<div class="p-row"><div class="p-dot" style="background:'+p.color+'"></div>'+
+      '<span class="p-name">'+p.email+'</span>'+
+      '<button class="p-rm" onclick="removeP('+i+')">×</button></div>';
+  }).join('');
+  buildCal();
+}
+function removeP(i){ ST.group.parts.splice(i,1); renderPanel(); }
+
+// ─────────────────────────────────────────────
+// CALENDAR GRID
+// ─────────────────────────────────────────────
+function buildCal(){
+  var svEl=document.getElementById('dateStart'); if(!svEl||!svEl.value) return;
+  var evEl=document.getElementById('dateEnd');   if(!evEl||!evEl.value) return;
+  var ws=getMin('timeStart'), we=getMin('timeEnd'); if(ws>=we) we=ws+60;
+  var lo=cst().lunch, ls=lo?getMin('lunchStart'):null, le_=lo?getMin('lunchEnd'):null;
+  var sd=parseDate(svEl.value), ed=parseDate(evEl.value);
+  var wd=[]; var c=new Date(sd);
+  while(c<=ed && wd.length<5){ if(dayIn(c.getDay())) wd.push(new Date(c)); c.setDate(c.getDate()+1); }
+  if(!wd.length){ document.getElementById('calInner').innerHTML='<div style="padding:10px;font-size:10px;color:#3a3a55;text-align:center">Seçili günlerde çalışma günü yok</div>'; return; }
+  var cols=wd.length, cw=Math.max(34, Math.floor(185/cols));
+  var steps=[]; for(var m=ws; m<we; m+=30) steps.push(m);
+  var h='<div style="display:flex;border-bottom:1px solid var(--brd)"><div style="width:28px;flex-shrink:0;background:#14142a;border-right:1px solid var(--brd)"></div>';
+  wd.forEach(function(d){ h+='<div style="width:'+cw+'px;flex-shrink:0;background:#14142a;font-family:DM Mono,monospace;font-size:9px;color:#6060a0;font-weight:700;text-align:center;padding:4px 2px;border-right:1px solid rgba(255,255,255,.04)">'+DAY_NAMES[d.getDay()]+'<br><span style="font-size:10px;color:#a0a0c8">'+d.getDate()+'</span></div>'; });
+  h+='</div>';
+  steps.forEach(function(m){
+    var full=(m%60===0), lbl=full?pad2(m/60):pad2(Math.floor(m/60))+':30';
+    h+='<div style="display:flex;'+(full?'border-top:1px solid rgba(255,255,255,.07)':'')+'">';
+    h+='<div style="width:28px;flex-shrink:0;height:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;border-right:1px solid var(--brd);font-family:DM Mono,monospace;font-size:'+(full?'8':'7')+'px;color:'+(full?'#5a5a80':'#3a3a55')+'">'+lbl+'</div>';
+    wd.forEach(function(d){
+      var isLunch = lo && ls!==null && m<le_ && (m+30)>ls;
+      var bg = isLunch ? 'rgba(251,191,36,.12)' : 'rgba(52,211,153,.07)'; // varsayılan boş
+      h+='<div style="width:'+cw+'px;flex-shrink:0;height:14px;background:'+bg+';border-right:1px solid rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.03)"></div>';
+    });
+    h+='</div>';
+  });
+  document.getElementById('calInner').innerHTML=h;
+  var leg='<div class="leg-i"><div class="leg-d" style="background:rgba(52,211,153,.4)"></div>Boş</div>';
+  leg+='<div class="leg-i"><div class="leg-d" style="background:rgba(248,113,113,.4)"></div>Meşgul</div>';
+  if(lo) leg+='<div class="leg-i"><div class="leg-d" style="background:rgba(251,191,36,.4)"></div>Öğle</div>';
+  document.getElementById('calLegend').innerHTML=leg;
+}
+
+// ─────────────────────────────────────────────
+// FIND SLOTS
+// ─────────────────────────────────────────────
+function findSlots(){
+  var sv=document.getElementById('dateStart').value;
+  var ev=document.getElementById('dateEnd').value;
+  if(!sv||!ev){ setStatus('Tarih aralığı seçin.','err'); return; }
+  if(!cst().days.length){ setStatus('En az bir gün seçin.','err'); return; }
+  var ws=getMin('timeStart'), we=getMin('timeEnd');
+  if(ws>=we){ setStatus('Başlangıç saati bitiş saatinden önce olmalı.','err'); return; }
+
+  appState='loading';
+  document.getElementById('findBtn').disabled=true;
+  document.getElementById('findBtn').textContent='⏳ Takvim okunuyor…';
+  setStatus('Exchange\'den meşgul zamanlar alınıyor…','info');
+
+  var startDt = parseDate(sv);
+  var endDt   = parseDate(ev);
+  endDt.setHours(23,59,59);
+
+  var lo = cst().lunch;
+  var ls = lo ? getMin('lunchStart') : null;
+  var le = lo ? getMin('lunchEnd')   : null;
+
+  if(activeTab === 'solo'){
+    fetchBusyBlocks(startDt, endDt, function(err, busyBlocks){
+      document.getElementById('findBtn').disabled=false;
+      document.getElementById('findBtn').textContent='🔍 Slotları Bul';
+      if(err){ setStatus('Hata: '+err,'err'); appState='idle'; return; }
+      slots = computeSlots(busyBlocks, startDt, endDt, ws, we, ls, le, cst().dur, cst().mode, cst().days);
+      renderSlots();
+      appState='ready';
+      document.getElementById('sendBtn').disabled = slots.filter(function(s){return s.sel;}).length === 0;
+      setStatus(slots.length + ' müsait slot bulundu ✓','ok');
+      // Takvimi gerçek veriyle güncelle
+      updateCalWithBusy(busyBlocks, startDt, endDt, ws, we, ls, le);
+    });
+  } else {
+    // Grup: kendin + katılımcılar
+    var selfEmail = Office.context && Office.context.mailbox
+      ? Office.context.mailbox.userProfile.emailAddress
+      : 'self@dev.local';
+    var allEmails = [selfEmail].concat(ST.group.parts.map(function(p){return p.email;}));
+
+    fetchGroupBusyBlocks(allEmails, startDt, endDt, function(err, blocksByEmail){
+      document.getElementById('findBtn').disabled=false;
+      document.getElementById('findBtn').textContent='🔍 Slotları Bul';
+      if(err){ setStatus('Hata: '+err,'err'); appState='idle'; return; }
+      // Tüm katılımcıların meşgul bloklarını birleştir
+      var allBlocks = [];
+      Object.keys(blocksByEmail).forEach(function(email){
+        blocksByEmail[email].forEach(function(b){ allBlocks.push(b); });
+      });
+      slots = computeSlots(allBlocks, startDt, endDt, ws, we, ls, le, cst().dur, cst().mode, cst().days);
+      renderSlots();
+      appState='ready';
+      document.getElementById('sendBtn').disabled = slots.filter(function(s){return s.sel;}).length === 0;
+      setStatus(slots.length + ' ortak müsait slot bulundu ✓','ok');
+    });
+  }
+}
+
+function updateCalWithBusy(busyBlocks, startDt, endDt, ws, we, ls, le){
+  var svEl=document.getElementById('dateStart');
+  var evEl=document.getElementById('dateEnd');
+  if(!svEl||!evEl) return;
+  var wd=[]; var c=new Date(startDt);
+  while(c<=endDt && wd.length<5){ if(dayIn(c.getDay())) wd.push(new Date(c)); c.setDate(c.getDate()+1); }
+  if(!wd.length) return;
+  var cols=wd.length, cw=Math.max(34, Math.floor(185/cols));
+  var steps=[]; for(var m=ws; m<we; m+=30) steps.push(m);
+  var lo=cst().lunch, le_=lo?(le||getMin('lunchEnd')):null, ls_=lo?(ls||getMin('lunchStart')):null;
+  var h='<div style="display:flex;border-bottom:1px solid var(--brd)"><div style="width:28px;flex-shrink:0;background:#14142a;border-right:1px solid var(--brd)"></div>';
+  wd.forEach(function(d){ h+='<div style="width:'+cw+'px;flex-shrink:0;background:#14142a;font-family:DM Mono,monospace;font-size:9px;color:#6060a0;font-weight:700;text-align:center;padding:4px 2px;border-right:1px solid rgba(255,255,255,.04)">'+DAY_NAMES[d.getDay()]+'<br><span style="font-size:10px;color:#a0a0c8">'+d.getDate()+'</span></div>'; });
+  h+='</div>';
+  steps.forEach(function(m){
+    var full=(m%60===0), lbl=full?pad2(m/60):pad2(Math.floor(m/60))+':30';
+    h+='<div style="display:flex;'+(full?'border-top:1px solid rgba(255,255,255,.07)':'')+'">'+
+      '<div style="width:28px;flex-shrink:0;height:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;border-right:1px solid var(--brd);font-family:DM Mono,monospace;font-size:'+(full?'8':'7')+'px;color:'+(full?'#5a5a80':'#3a3a55')+'">'+lbl+'</div>';
+    wd.forEach(function(d){
+      var dk=fmtDate(d), busy=isBusy(busyBlocks,dk,m,m+30);
+      var isLunch=lo&&ls_!==null&&m<le_&&(m+30)>ls_;
+      var bg=isLunch?'rgba(251,191,36,.14)':(busy?'rgba(248,113,113,.18)':'rgba(52,211,153,.14)');
+      h+='<div style="width:'+cw+'px;flex-shrink:0;height:14px;background:'+bg+';border-right:1px solid rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.03)"></div>';
+    });
+    h+='</div>';
+  });
+  document.getElementById('calInner').innerHTML=h;
+}
+
+// ─────────────────────────────────────────────
+// SLOT LİSTESİ
+// ─────────────────────────────────────────────
+function renderSlots(){
+  var list=document.getElementById('slotList');
+  var sendBtn=document.getElementById('sendBtn');
+  if(!slots.length){
+    list.innerHTML='<div class="ph">Bu aralıkta müsait slot bulunamadı.</div>';
+    document.getElementById('slotCount').textContent='';
+    if(sendBtn) sendBtn.disabled=true;
+    return;
+  }
+  list.innerHTML='';
+  slots.forEach(function(s,i){
+    var row=document.createElement('div');
+    row.className='slot-row'+(s.sel?' sel':'');
+    row.dataset.idx=i;
+    row.innerHTML='<div class="schk"><span class="stk">✓</span></div>'+
+      '<span class="sday">'+s.lbl+'</span>'+
+      '<span class="stime">'+s.time+'</span>'+
+      '<span class="stag '+(s.win?'w':'f')+'">'+(s.win?'Pencere':'Boş')+'</span>';
+    list.appendChild(row);
+  });
+  var n=slots.filter(function(s){return s.sel;}).length;
+  document.getElementById('slotCount').textContent=n+' / '+slots.length+' seçili';
+  if(sendBtn) sendBtn.disabled=(n===0);
+}
+
+// ─────────────────────────────────────────────
+// E-POSTA GÖNDER
+// ─────────────────────────────────────────────
+function buildGreeting(){
+  var name=(document.getElementById('recipientName')||{}).value||''; name=name.trim();
+  var hanim=document.getElementById('unvanHanim')&&document.getElementById('unvanHanim').checked;
+  var bey  =document.getElementById('unvanBey')  &&document.getElementById('unvanBey').checked;
+  var unvan=hanim?'Hanım':(bey?'Bey':'');
+  return (name&&unvan)?'Sayın '+name+' '+unvan+',':'Merhaba,';
+}
+
+function doSend(){
+  var selSlots = slots.filter(function(s){return s.sel;});
+  if(!selSlots.length){ setStatus('En az bir slot seçin.','err'); return; }
+
+  var raw = (document.getElementById('recipientInput')||{}).value||'';
+  var emails = raw.split(';').map(function(e){return e.trim();}).filter(Boolean);
+  if(!emails.length){ setStatus('Alıcı e-posta adresi girin.','err'); return; }
+
+  var subject = 'Toplantı için müsait zamanlarım';
+
+  var tableRows = selSlots.map(function(s){
+    return '<tr>'+
+      '<td style="padding:7px 12px;border-top:1px solid #f1f5f9;font-size:12px;color:#7a7570">'+s.lbl+'</td>'+
+      '<td style="padding:7px 12px;border-top:1px solid #f1f5f9;font-size:12px;font-weight:700;font-family:monospace">'+s.time+'</td>'+
+      '<td style="padding:7px 12px;border-top:1px solid #f1f5f9">'+
+        '<span style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;color:#059669;font-size:9px;font-weight:700;padding:2px 6px;text-transform:uppercase">Müsait</span>'+
+      '</td></tr>';
+  }).join('');
+
+  var htmlBody =
+    '<p style="margin-bottom:10px">'+buildGreeting()+'</p>'+
+    '<p style="margin-bottom:10px">Önümüzdeki günlerde bir görüşme ayarlamak istiyorum. Aşağıdaki zaman dilimlerinde müsaitim:</p>'+
+    '<table style="width:100%;border-collapse:collapse;margin:14px 0">'+
+    '<thead><tr style="background:#f1f5f9">'+
+    '<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;color:#7a7570">Gün</th>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;color:#7a7570">Saat</th>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;color:#7a7570">Durum</th>'+
+    '</tr></thead><tbody>'+tableRows+'</tbody></table>'+
+    '<p style="margin-bottom:10px">Size uygun bir zaman varsa lütfen bildirin; takvime hemen ekleyelim.</p>'+
+    '<p style="margin-bottom:14px">İyi çalışmalar,</p>'+
+    '<div style="border-top:1px solid #ddd9d3;padding-top:12px;font-size:11px;color:#7a7570;line-height:1.7">'+
+    '<div style="font-weight:700;color:#1a1814;font-size:12px;margin-bottom:2px" id="senderSig">Gönderen</div>'+
+    '</div>'+
+    '<div style="margin-top:16px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px">'+
+    '<p style="font-size:11px;color:#1e40af;margin-bottom:6px">📅 <strong>FreeBusy Sharer</strong> ile oluşturuldu</p>'+
+    '<p style="font-size:11px;color:#3b82f6">Siz de müsait zamanlarınızı kolayca paylaşmak için '+
+    '<a href="https://appsource.microsoft.com" style="color:#2563eb">Microsoft AppSource</a>\'tan edinin.</p>'+
+    '</div>';
+
+  // Outlook'ta yeni mesaj formu aç
+  if(Office.context && Office.context.mailbox && Office.context.mailbox.displayNewMessageForm){
+    // Gönderen imzasını güncelle
+    if(Office.context.mailbox.userProfile){
+      var profile = Office.context.mailbox.userProfile;
+      htmlBody = htmlBody.replace('id="senderSig">Gönderen',
+        'id="senderSig">'+profile.displayName+'</div>'+
+        '<div style="font-size:11px;color:#7a7570">'+profile.emailAddress);
+    }
+    Office.context.mailbox.displayNewMessageForm({
+      toRecipients: emails.map(function(e){return {displayName:e, emailAddress:e};}),
+      subject:      subject,
+      htmlBody:     htmlBody
+    });
+    setStatus('Outlook taslağı açıldı ✓','ok');
+  } else {
+    // Fallback: mailto
+    var plain = selSlots.map(function(s){return '  • '+s.lbl+', '+s.time;}).join('\n');
+    var body  = buildGreeting()+'\n\nMüsait olduğum zamanlar:\n'+plain+'\n\nİyi çalışmalar,';
+    window.open('mailto:'+emails.join(',')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
+    setStatus('Taslak hazırlandı ✓','ok');
+  }
+}
+</script>
+</body>
+</html>
