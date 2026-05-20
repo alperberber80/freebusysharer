@@ -8,9 +8,9 @@
   <Id>d15d3d5a-87fa-48f1-be49-1a76b8703e69</Id>
   <Version>1.0.0.0</Version>
   <ProviderName>KoZer</ProviderName>
-  <DefaultLocale>tr-TR</DefaultLocale>
+  <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="FreeBusy Sharer"/>
-  <Description DefaultValue="Takviminizdeki bos zamanlari bulun ve sirket disindaki kisilerle kolayca paylasin."/>
+  <Description DefaultValue="Find your free times and share with external contacts."/>
   <IconUrl DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://alperberber80.github.io/freebusysharer/support.html"/>
@@ -52,12 +52,10 @@
         <bt:Set Name="Mailbox"/>
       </bt:Sets>
     </Requirements>
-
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
           <FunctionFile resid="Commands.Url"/>
-
           <ExtensionPoint xsi:type="MessageComposeCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="freebusyGroup.compose">
@@ -81,7 +79,6 @@
               </Group>
             </OfficeTab>
           </ExtensionPoint>
-
           <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="freebusyGroup.read">
@@ -105,11 +102,9 @@
               </Group>
             </OfficeTab>
           </ExtensionPoint>
-
         </DesktopFormFactor>
       </Host>
     </Hosts>
-
     <Resources>
       <bt:Images>
         <bt:Image id="Icon.16x16" DefaultValue="https://alperberber80.github.io/freebusysharer/assets/icon-16.png"/>
@@ -121,13 +116,12 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://alperberber80.github.io/freebusysharer/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel"  DefaultValue="Toplanti Araclari"/>
-        <bt:String id="ButtonLabel" DefaultValue="Musait Saatleri Paylas"/>
+        <bt:String id="GroupLabel"  DefaultValue="Meeting Tools"/>
+        <bt:String id="ButtonLabel" DefaultValue="Share Free Times"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="ButtonDesc"  DefaultValue="Takviminizdeki bos zamanlari bulun ve paylasın."/>
+        <bt:String id="ButtonDesc" DefaultValue="Find free slots in your calendar and share with external contacts."/>
       </bt:LongStrings>
     </Resources>
-
   </VersionOverrides>
 </OfficeApp>
